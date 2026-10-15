@@ -1226,13 +1226,304 @@ function MenuModal({
   );
 }
 
+// Interactive Customer Favorites & Featured Picks Modal (Only opens when user clicks button)
+function FeaturedFavoritesModal({
+  open,
+  onClose,
+  onOpenMenu,
+  onOpenOrder,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onOpenMenu: (tab: "breakfast" | "lunch" | "drinks" | "all", cat?: string) => void;
+  onOpenOrder: () => void;
+}) {
+  const [activeFilter, setActiveFilter] = useState<"all" | "breakfast" | "lunch" | "drinks">("all");
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setActiveFilter("all");
+      setSearch("");
+    }
+  }, [open]);
+
+  const filteredDishes = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return FEATURED_FAVORITES.filter((dish) => {
+      // Tab filter
+      if (activeFilter === "breakfast" && dish.targetTab !== "breakfast") return false;
+      if (activeFilter === "lunch" && dish.targetTab !== "lunch") return false;
+      if (activeFilter === "drinks" && dish.targetTab !== "drinks") return false;
+
+      // Search query
+      if (query) {
+        const matchesName = dish.name.toLowerCase().includes(query);
+        const matchesSpanish = dish.spanishName?.toLowerCase().includes(query) ?? false;
+        const matchesDesc = dish.description.toLowerCase().includes(query);
+        const matchesCategory = dish.category.toLowerCase().includes(query);
+        return matchesName || matchesSpanish || matchesDesc || matchesCategory;
+      }
+      return true;
+    });
+  }, [activeFilter, search]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200 cursor-pointer"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-5xl max-h-[94vh] sm:max-h-[92vh] flex flex-col rounded-2xl sm:rounded-3xl bg-gradient-to-b from-[#24140e] via-[#1a0e08] to-[#120804] border border-[#c084fc]/50 text-[#fffcf8] shadow-2xl overflow-hidden cursor-default"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="featured-modal-title"
+      >
+        {/* Glow effects */}
+        <div className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-[#a855f7]/20 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-[#deb887]/15 blur-3xl pointer-events-none" />
+
+        {/* Modal Header */}
+        <div className="shrink-0 p-4 sm:p-6 border-b border-[#361e12] bg-[#1c0f0a]/98 backdrop-blur-md">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#e11d48] to-[#9333ea] border border-[#a855f7]/50 text-[#ffffff] shadow-lg shrink-0">
+                <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-[#fde047]" />
+              </div>
+              <div>
+                <h3 id="featured-modal-title" className="font-serif text-lg sm:text-2xl font-black text-[#fffcf8] leading-tight">
+                  Customer Favorites &amp; House Specials
+                </h3>
+                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#deb887] mt-0.5">
+                  12 Signature Dishes &amp; Cuban Espresso · Prepared Fresh Daily
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="h-9 w-9 rounded-full bg-[#180d08] border border-[#a855f7]/40 flex items-center justify-center text-[#d8b4fe] hover:text-[#fffcf8] hover:border-[#c084fc] transition-colors cursor-pointer shrink-0"
+              aria-label="Close modal"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Filter Pills & Search */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            {/* Filter Tabs */}
+            <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-[#140b07] border border-[#361e12]">
+              <button
+                type="button"
+                onClick={() => setActiveFilter("all")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeFilter === "all"
+                    ? "bg-[#7c3aed] text-white shadow-md"
+                    : "text-[#cbd5e1] hover:text-white hover:bg-[#28160f]"
+                }`}
+              >
+                All Picks ({FEATURED_FAVORITES.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveFilter("breakfast")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeFilter === "breakfast"
+                    ? "bg-[#7c3aed] text-white shadow-md"
+                    : "text-[#cbd5e1] hover:text-white hover:bg-[#28160f]"
+                }`}
+              >
+                Breakfast
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveFilter("lunch")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeFilter === "lunch"
+                    ? "bg-[#7c3aed] text-white shadow-md"
+                    : "text-[#cbd5e1] hover:text-white hover:bg-[#28160f]"
+                }`}
+              >
+                Lunch &amp; Sandwiches
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveFilter("drinks")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeFilter === "drinks"
+                    ? "bg-[#7c3aed] text-white shadow-md"
+                    : "text-[#cbd5e1] hover:text-white hover:bg-[#28160f]"
+                }`}
+              >
+                Coffee &amp; Drinks
+              </button>
+            </div>
+
+            {/* Quick Search */}
+            <div className="relative sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#deb887]" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search favorite dishes..."
+                className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[#140b07] border border-[#a855f7]/30 focus:border-[#deb887] text-xs text-[#fffcf8] placeholder:text-[#8d7c9f] focus:outline-none"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8d7c9f] hover:text-white cursor-pointer"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Scrollable Dishes Grid */}
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 md:p-8 space-y-6">
+          {filteredDishes.length === 0 ? (
+            <div className="py-16 text-center text-sm text-[#cbd5e1]">
+              <p className="font-semibold text-base text-[#fffcf8]">No dishes found matching "{search}"</p>
+              <p className="mt-1 text-xs text-[#deb887]">Try searching for "Cuban", "Pancake", "Steak", or reset filters.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setActiveFilter("all");
+                }}
+                className="mt-4 px-4 py-2 rounded-xl bg-[#7c3aed] text-white text-xs font-bold cursor-pointer"
+              >
+                Reset Search
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+              {filteredDishes.map((dish) => (
+                <div
+                  key={dish.id}
+                  className="dish-card group flex flex-col justify-between rounded-2xl overflow-hidden bg-[#20120a] border border-[#3d2417] hover:border-[#a855f7]/60 transition-all shadow-md"
+                >
+                  <div>
+                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#2d1a12]">
+                      <img
+                        src={dish.image}
+                        alt={dish.name}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute top-2.5 left-2.5">
+                        <DishBadge type={dish.badge as any} />
+                      </div>
+                    </div>
+
+                    <div className="p-4 sm:p-5">
+                      <h4 className="font-serif text-base font-bold text-[#fffcf8] leading-snug group-hover:text-[#c084fc] transition-colors">
+                        {dish.name}
+                      </h4>
+                      {dish.spanishName && (
+                        <p className="text-xs italic text-[#d8b4fe] mt-0.5">
+                          {dish.spanishName}
+                        </p>
+                      )}
+                      <p className="text-xs text-[#cbd5e1] mt-2 leading-relaxed">
+                        {dish.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="px-4 pb-4 pt-3 border-t border-[#3a2014] flex items-center justify-between gap-2">
+                    <span className="price-display text-sm font-black text-[#deb887]">
+                      {dish.price}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onOpenOrder();
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-[#7c3aed]/25 hover:bg-[#7c3aed] text-[11px] font-bold text-[#e9d5ff] hover:text-white border border-[#a855f7]/40 transition-colors cursor-pointer flex items-center gap-1"
+                      >
+                        <ShoppingBag className="h-3 w-3" />
+                        <span>Order</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          trackMenuExplore(dish.name, `Customer favorite dish: ${dish.name}`);
+                          onClose();
+                          onOpenMenu(dish.targetTab, dish.category);
+                        }}
+                        className="text-xs font-bold text-[#c084fc] hover:text-[#e9d5ff] transition-colors cursor-pointer"
+                      >
+                        In Menu →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Modal Footer */}
+        <div className="shrink-0 p-3.5 sm:p-5 border-t border-[#361e12] bg-[#1a0e08] flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-[#deb887]">
+            <Sparkles className="h-4 w-4 text-[#c084fc]" />
+            <span className="font-medium">All items freshly prepared to order at American Coffee Shop</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenOrder();
+              }}
+              className="order-online-cool-btn px-4 py-2 text-xs font-extrabold cursor-pointer shadow-md"
+            >
+              <ShoppingBag className="online-icon-pulse h-3.5 w-3.5" />
+              <span>Order Online</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenMenu("all");
+              }}
+              className="px-3.5 py-2 rounded-full bg-[#27150c] text-[#d8b4fe] hover:text-[#fffcf8] hover:border-[#c084fc] border border-[#a855f7]/30 font-bold transition-colors cursor-pointer"
+            >
+              Explore Full 20-Section Menu
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3 py-2 rounded-full bg-[#1c0f0a] text-[#cbd5e1] hover:text-[#fffcf8] transition-colors cursor-pointer border border-[#3d2518]"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Header({
   onOpenMenu,
   onOpenDrinks,
+  onOpenFavorites,
   onOpenOrder,
 }: {
   onOpenMenu: () => void;
   onOpenDrinks: () => void;
+  onOpenFavorites: () => void;
   onOpenOrder: () => void;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -1278,6 +1569,9 @@ function Header({
                 } else if (link.href === "#drinks") {
                   e.preventDefault();
                   onOpenDrinks();
+                } else if (link.href === "#featured") {
+                  e.preventDefault();
+                  onOpenFavorites();
                 }
               }}
               className="text-sm font-semibold text-[#f5f0ff]/80 hover:text-[#c084fc] transition-colors py-1 cursor-pointer tracking-wide"
@@ -1322,6 +1616,9 @@ function Header({
                 } else if (link.href === "#drinks") {
                   e.preventDefault();
                   onOpenDrinks();
+                } else if (link.href === "#featured") {
+                  e.preventDefault();
+                  onOpenFavorites();
                 }
               }}
               className="block py-2.5 text-base font-medium text-[#f5f0ff]/90 hover:text-[#c084fc]"
@@ -1353,6 +1650,7 @@ export function Home() {
   const [menuModalOpen, setMenuModalOpen] = useState(false);
   const [menuModalTab, setMenuModalTab] = useState<"breakfast" | "lunch" | "drinks" | "all">("breakfast");
   const [menuModalCategory, setMenuModalCategory] = useState("all");
+  const [featuredModalOpen, setFeaturedModalOpen] = useState(false);
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [policyModalId, setPolicyModalId] = useState<string | null>(null);
 
@@ -1373,6 +1671,7 @@ export function Home() {
       if (e.key === "Escape") {
         setMenuModalOpen(false);
         setOrderModalOpen(false);
+        setFeaturedModalOpen(false);
         setPolicyModalId(null);
       }
     };
@@ -1382,7 +1681,7 @@ export function Home() {
 
   // Background scroll locking when any modal is open
   useEffect(() => {
-    const isAnyModalOpen = menuModalOpen || orderModalOpen || Boolean(policyModalId);
+    const isAnyModalOpen = menuModalOpen || orderModalOpen || featuredModalOpen || Boolean(policyModalId);
     if (isAnyModalOpen) {
       document.body.style.overflow = "hidden";
     } else {
@@ -1391,7 +1690,7 @@ export function Home() {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [menuModalOpen, orderModalOpen, policyModalId]);
+  }, [menuModalOpen, orderModalOpen, featuredModalOpen, policyModalId]);
 
   // Automatically record website visit on page load only if site is online
   useEffect(() => {
@@ -1422,6 +1721,11 @@ export function Home() {
     setMenuModalOpen(true);
   };
 
+  const handleOpenFavorites = () => {
+    trackMenuExplore("Customer Favorites", "User opened Featured Favorites modal");
+    setFeaturedModalOpen(true);
+  };
+
   const handleSelectCategoryFromModal = (catId: string) => {
     trackMenuExplore(catId, `Shortcut category from modal: ${catId}`);
     setMenuModalCategory(catId);
@@ -1434,6 +1738,7 @@ export function Home() {
       <Header
         onOpenMenu={() => handleOpenMenu("breakfast")}
         onOpenDrinks={handleOpenDrinks}
+        onOpenFavorites={handleOpenFavorites}
         onOpenOrder={() => setOrderModalOpen(true)}
       />
 
@@ -1442,6 +1747,14 @@ export function Home() {
         open={orderModalOpen}
         onClose={() => setOrderModalOpen(false)}
         onSelectCategory={handleSelectCategoryFromModal}
+      />
+
+      {/* Featured Picks & Customer Favorites Modal (Opens on button click) */}
+      <FeaturedFavoritesModal
+        open={featuredModalOpen}
+        onClose={() => setFeaturedModalOpen(false)}
+        onOpenMenu={handleOpenMenu}
+        onOpenOrder={() => setOrderModalOpen(true)}
       />
 
       {/* Official Full Digital Menu Modal (Only views when user clicks View Menu or View Drinks) */}
@@ -1484,12 +1797,21 @@ export function Home() {
 
           <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 py-16 sm:py-24">
             <div className="max-w-xl lg:max-w-2xl">
-              {/* Clean, Non-Congested Eyebrow */}
-              <div className="mb-3">
+              {/* Clean, Non-Congested Eyebrow with Direct Button to Favorites */}
+              <div className="mb-3 flex flex-wrap items-center gap-2">
                 <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.2em] text-[#deb887] flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-[#c084fc]" />
                   <span>American &amp; Spanish Diner · Oakland Park, FL</span>
                 </span>
+                <button
+                  type="button"
+                  onClick={handleOpenFavorites}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7c3aed]/25 hover:bg-[#7c3aed] border border-[#a855f7]/50 text-xs font-bold text-[#deb887] hover:text-white transition-all cursor-pointer shadow-sm"
+                  title="Click to view 12 customer favorites"
+                >
+                  <Star className="h-3 w-3 fill-[#deb887]" />
+                  <span>12 Customer Favorites</span>
+                </button>
               </div>
 
               {/* Bold Main Headline: American Coffee Shop */}
@@ -1557,75 +1879,61 @@ export function Home() {
         </section>
 
         {/* ==========================================================================
-            FEATURED FAVORITES (Spacious 4-Column Grid with Rich Photography)
+            FEATURED PICKS TEASER BAR (UNCONGESTED & FAST-LOADING)
+            Only opens the full 12-dish showcase modal when user clicks the button!
             ========================================================================== */}
-        <section id="featured" className="py-20 sm:py-24 bg-[#1a0f09] border-y border-[#3a2014]">
+        <section id="featured" className="py-12 sm:py-16 bg-[#1a0f09] border-y border-[#3a2014]">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10">
-            <div className="text-center max-w-2xl mx-auto mb-12">
-              <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-[0.2em] text-[#e9d5ff] bg-[#2d180f] border border-[#a855f7]/50">
-                <Sparkles className="h-3.5 w-3.5 text-[#c084fc]" />
-                <span>Customer Favorites</span>
-              </span>
-              <h2 className="mt-3 font-serif text-3xl sm:text-4xl lg:text-5xl font-black text-[#fffcf8] tracking-tight">
-                Featured House Picks
-              </h2>
-              <p className="mt-3 text-sm sm:text-base text-[#d8b4fe]">
-                Our signature Cuban coffee specialties, breakfast griddles, and authentic Spanish lunch plates.
-              </p>
-            </div>
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#2a160d] via-[#1f1009] to-[#2a160d] border border-[#a855f7]/30 p-6 sm:p-10 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+              {/* Subtle background glow */}
+              <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#a855f7]/15 blur-3xl pointer-events-none" />
+              <div className="absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-[#deb887]/15 blur-3xl pointer-events-none" />
 
-            {/* 12 Featured Dish Cards Grid - Spacious 4 Columns */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-7">
-              {FEATURED_FAVORITES.map((dish) => (
-                <div
-                  key={dish.id}
-                  className="dish-card group flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#2d1a12]">
-                      <img
-                        src={dish.image}
-                        alt={dish.name}
-                        loading="lazy"
-                        decoding="async"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute top-2.5 left-2.5">
-                        <DishBadge type={dish.badge as any} />
-                      </div>
-                    </div>
-
-                    <div className="p-4 sm:p-5">
-                      <h3 className="font-serif text-base font-bold text-[#fffcf8] leading-snug group-hover:text-[#c084fc] transition-colors">
-                        {dish.name}
-                      </h3>
-                      {dish.spanishName && (
-                        <p className="text-xs italic text-[#d8b4fe] mt-0.5">
-                          {dish.spanishName}
-                        </p>
-                      )}
-                      <p className="text-xs text-[#cbd5e1] mt-2 leading-relaxed line-clamp-2">
-                        {dish.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="px-4 pb-4 pt-3 border-t border-[#3a2014] flex items-center justify-between">
-                    <span className="price-display text-sm font-black text-[#deb887]">
-                      {dish.price}
-                    </span>
-                    <button
-                      onClick={() => {
-                        trackMenuExplore(dish.name, `Customer favorite dish: ${dish.name}`);
-                        handleOpenMenu(dish.targetTab, dish.category);
-                      }}
-                      className="text-xs font-bold text-[#c084fc] hover:text-[#e9d5ff] transition-colors cursor-pointer"
-                    >
-                      View in Menu →
-                    </button>
-                  </div>
+              <div className="max-w-xl text-center md:text-left z-10">
+                <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-[#e9d5ff] bg-[#160d08] border border-[#a855f7]/40 mb-3">
+                  <Sparkles className="h-3.5 w-3.5 text-[#c084fc]" />
+                  <span>Customer Favorites &amp; House Specials</span>
                 </div>
-              ))}
+                <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-black text-[#fffcf8] tracking-tight">
+                  Featured House Picks
+                </h2>
+                <p className="mt-2 text-xs sm:text-sm text-[#d8b4fe] leading-relaxed">
+                  Handcrafted Cafe con Leche, pressed Cuban sandwiches, Belgian chicken &amp; waffles, Palomilla steaks, and homestyle Spanish comfort.
+                </p>
+
+                {/* Quick teaser pills (compact, 0 clutter) */}
+                <div className="mt-4 flex flex-wrap items-center justify-center md:justify-start gap-2">
+                  <span className="text-[11px] font-semibold text-[#deb887] bg-[#deb887]/10 border border-[#deb887]/20 px-2.5 py-1 rounded-full">
+                    ☕ Cafe Con Leche
+                  </span>
+                  <span className="text-[11px] font-semibold text-[#deb887] bg-[#deb887]/10 border border-[#deb887]/20 px-2.5 py-1 rounded-full">
+                    🥪 Cuban Sandwich
+                  </span>
+                  <span className="text-[11px] font-semibold text-[#deb887] bg-[#deb887]/10 border border-[#deb887]/20 px-2.5 py-1 rounded-full">
+                    🧇 Chicken &amp; Waffles
+                  </span>
+                  <span className="text-[11px] font-semibold text-[#deb887] bg-[#deb887]/10 border border-[#deb887]/20 px-2.5 py-1 rounded-full">
+                    🥩 Palomilla Steak
+                  </span>
+                  <span className="text-[11px] font-semibold text-[#c084fc] bg-[#c084fc]/10 border border-[#c084fc]/20 px-2.5 py-1 rounded-full">
+                    +8 more favorites
+                  </span>
+                </div>
+              </div>
+
+              {/* ACTION BUTTON TO OPEN THE FEATURED FAVORITES MODAL */}
+              <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 z-10 w-full sm:w-auto">
+                <button
+                  type="button"
+                  id="open-featured-btn"
+                  onClick={handleOpenFavorites}
+                  className="cool-menu-btn group w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-full px-7 py-4 text-xs sm:text-sm font-black text-[#ffffff] shadow-2xl cursor-pointer hover:scale-[1.02] transition-transform"
+                >
+                  <Sparkles className="h-4 w-4 text-[#fde047] group-hover:rotate-12 transition-transform" />
+                  <span>View Featured Picks (12 Items)</span>
+                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1.5 text-[#e9d5ff]" />
+                </button>
+              </div>
             </div>
           </div>
         </section>
